@@ -1,0 +1,44 @@
+version: '3'
+services:
+  app:
+    environment:
+      DB_NAME: 'order_service'
+      DB_USERNAME: ''
+      DB_PASSWORD: ''
+      DB_HOST: ''
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    ports:
+      - "6080:6080"
+      - "9070:9097"
+    networks:
+      - my-self-network
+
+  simulator:
+    depends_on:
+      - app
+    build:
+      context: ./simulator
+      dockerfile: Dockerfile
+    networks:
+      - my-self-network
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9743:9090"
+    depends_on:
+      - app
+      - simulator
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--enable-feature=agent'
+    networks:
+      - my-self-network
+
+networks:
+  my-self-network:
+    driver: bridge
